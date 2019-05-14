@@ -60,8 +60,8 @@ class WAE(object):
             enc_mean, enc_sigmas = res[0]
             enc_sigmas = tf.clip_by_value(enc_sigmas, -50, 50)
             self.enc_mean, self.enc_sigmas = enc_mean, enc_sigmas
-            if opts['verbose']:
-                self.add_sigmas_debug()
+            # if opts['verbose']:
+            self.add_sigmas_debug()
 
             eps = tf.random_normal((sample_size, opts['zdim']),
                                    0., 1., dtype=tf.float32)
@@ -705,26 +705,27 @@ class WAE(object):
                                     losses_match[-1], loss_rec_test, np.min(gen_blurr))
                     logging.error(debug_str)
 
-                    # Printing debug info for encoder variances if applicable
-                    if opts['e_noise'] == 'gaussian':
-                        logging.error('Per dimension encoder variances:')
-                        per_dim_range = self.debug_sigmas.eval(
-                            session = self.sess,
-                            feed_dict={self.sample_points: data.test_data[:500],
-                                       self.is_training: False})
-                        for idim in range(per_dim_range.shape[0]):
-                            if per_dim_range[idim][1] > 0.:
-                                logging.error(
-                                    'dim%.4d: [%.2f; %.2f; %.2f]  <------' % (idim,
-                                       per_dim_range[idim][0],
-                                       per_dim_range[idim][2],
-                                       per_dim_range[idim][1]))
-                            else:
-                                logging.error(
-                                    'dim%.4d: [%.2f; %.2f; %.2f]' % (idim,
-                                       per_dim_range[idim][0],
-                                       per_dim_range[idim][2],
-                                       per_dim_range[idim][1]))
+                    if opts['verbose']:
+                        # Printing debug info for encoder variances if applicable
+                        if opts['e_noise'] == 'gaussian':
+                            logging.error('Per dimension encoder variances:')
+                            per_dim_range = self.debug_sigmas.eval(
+                                session = self.sess,
+                                feed_dict={self.sample_points: data.test_data[:500],
+                                        self.is_training: False})
+                            for idim in range(per_dim_range.shape[0]):
+                                if per_dim_range[idim][1] > 0.:
+                                    logging.error(
+                                        'dim%.4d: [%.2f; %.2f; %.2f]  <------' % (idim,
+                                        per_dim_range[idim][0],
+                                        per_dim_range[idim][2],
+                                        per_dim_range[idim][1]))
+                                else:
+                                    logging.error(
+                                        'dim%.4d: [%.2f; %.2f; %.2f]' % (idim,
+                                        per_dim_range[idim][0],
+                                        per_dim_range[idim][2],
+                                        per_dim_range[idim][1]))
 
                     # Choosing the 2d projection for Pz vs Qz plots
                     pz_noise = self.sample_pz(opts['plot_num_pics'])

@@ -57,12 +57,12 @@ config_celebA['lambda_schedule'] = 'constant'
 
 config_mnist = {}
 config_mnist['dataset'] = 'mnist'
-config_mnist['verbose'] = True
+config_mnist['verbose'] = False
 config_mnist['save_every_epoch'] = 20
-config_mnist['print_every'] = 50
+config_mnist['print_every'] = 1000
 config_mnist['work_dir'] = 'results_mnist'
-config_mnist['plot_num_pics'] = 400
-config_mnist['plot_num_cols'] = 20
+config_mnist['plot_num_pics'] = 100
+config_mnist['plot_num_cols'] = 10
 
 config_mnist['input_normalize_sym'] = False
 config_mnist['data_dir'] = 'mnist'

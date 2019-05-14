@@ -141,11 +141,11 @@ def wise_encoder(opts, inputs, is_training=False, reuse=False):
                                         units=opts['zdim'],
                                         activation=None,
                                         name='code_mean')
+    # the output of the code_std_dev is log(code_std_dev) in my WiSE-ALE model
     code_std_dev = tf.layers.dense(encoded_signal,
                                         units=opts['zdim'],
-                                        activation=tf.nn.relu,
+                                        activation=None,
                                         name='code_std_dev')
-    code_std_dev = code_std_dev + 1e-4
 
     return code_mean, code_std_dev
 
@@ -258,7 +258,7 @@ def wise_decoder(opts, noise, is_training=False, reuse=False):
     decoded_2 = tf.layers.dense(decoded_1,
                                 units=28*28,
                                 activation=None)
-    decoded = tf.reshape(decoded_2, [-1, output_shape[0], output_shape[1], 1])
+    decoded = tf.reshape(decoded_2, [-1] + list(output_shape))
     if opts['input_normalize_sym']:
         return tf.nn.tanh(decoded), decoded
     else:
