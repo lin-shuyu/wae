@@ -72,8 +72,8 @@ config_mnist['adam_beta1'] = 0.5
 config_mnist['lr'] = 0.001
 config_mnist['lr_adv'] = 0.0005
 config_mnist['lr_schedule'] = 'manual' #manual, plateau, or a number
-config_mnist['batch_size'] = 100
-config_mnist['epoch_num'] = 100
+config_mnist['batch_size'] = 128
+config_mnist['epoch_num'] = 30
 config_mnist['init_std'] = 0.0099999
 config_mnist['init_bias'] = 0.0
 config_mnist['batch_norm'] = True
@@ -83,14 +83,14 @@ config_mnist['conv_filters_dim'] = 4
 
 config_mnist['e_pretrain'] = True
 config_mnist['e_pretrain_sample_size'] = 1000
-config_mnist['e_noise'] = 'add_noise'
+config_mnist['e_noise'] = 'gaussian'
 config_mnist['e_num_filters'] = 1024
 config_mnist['e_num_layers'] = 4
-config_mnist['e_arch'] = 'dcgan' # mlp, dcgan, ali
+config_mnist['e_arch'] = 'wise' # mlp, dcgan, ali
 
 config_mnist['g_num_filters'] = 1024
 config_mnist['g_num_layers'] = 3
-config_mnist['g_arch'] = 'dcgan_mod' # mlp, dcgan, dcgan_mod, ali
+config_mnist['g_arch'] = 'wise' # mlp, dcgan, dcgan_mod, ali
 
 config_mnist['gan_p_trick'] = False
 config_mnist['d_num_filters'] = 512

@@ -158,7 +158,7 @@ class Data(object):
                 step = step if step is not None else 1
                 keys = range(start, stop, step)
             else:
-                print type(key)
+                print(type(key))
                 raise Exception('This type of indexing yet not supported for the dataset')
             res = []
             new_keys = []
@@ -415,61 +415,75 @@ class DataHandler(object):
         te_X = None
         te_Y = None
 
-        with utils.o_gfile((data_dir, 'train-images-idx3-ubyte'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            tr_X = loaded[16:].reshape((60000, 28, 28, 1)).astype(np.float)
+        
 
-        with utils.o_gfile((data_dir, 'train-labels-idx1-ubyte'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            tr_Y = loaded[8:].reshape((60000)).astype(np.int)
+        # with utils.o_gfile((data_dir, 'train-images-idx3-ubyte'), 'rb') as fd:
+        #     loaded = np.frombuffer(fd.read(), dtype=np.uint8)
+        #     tr_X = loaded[16:].reshape((60000, 28, 28, 1)).astype(np.float)
 
-        with utils.o_gfile((data_dir, 't10k-images-idx3-ubyte'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            te_X = loaded[16:].reshape((10000, 28, 28, 1)).astype(np.float)
+        # with utils.o_gfile((data_dir, 'train-labels-idx1-ubyte'), 'rb') as fd:
+        #     loaded = np.frombuffer(fd.read(), dtype=np.uint8)
+        #     tr_Y = loaded[8:].reshape((60000)).astype(np.int)
 
-        with utils.o_gfile((data_dir, 't10k-labels-idx1-ubyte'), 'rb') as fd:
-            loaded = np.frombuffer(fd.read(), dtype=np.uint8)
-            te_Y = loaded[8:].reshape((10000)).astype(np.int)
+        # with utils.o_gfile((data_dir, 't10k-images-idx3-ubyte'), 'rb') as fd:
+        #     loaded = np.frombuffer(fd.read(), dtype=np.uint8)
+        #     te_X = loaded[16:].reshape((10000, 28, 28, 1)).astype(np.float)
 
-        tr_Y = np.asarray(tr_Y)
-        te_Y = np.asarray(te_Y)
+        # with utils.o_gfile((data_dir, 't10k-labels-idx1-ubyte'), 'rb') as fd:
+        #     loaded = np.frombuffer(fd.read(), dtype=np.uint8)
+        #     te_Y = loaded[8:].reshape((10000)).astype(np.int)
 
-        X = np.concatenate((tr_X, te_X), axis=0)
-        y = np.concatenate((tr_Y, te_Y), axis=0)
-        X = X / 255.
+        # tr_Y = np.asarray(tr_Y)
+        # te_Y = np.asarray(te_Y)
 
-        seed = 123
-        np.random.seed(seed)
-        np.random.shuffle(X)
-        np.random.seed(seed)
-        np.random.shuffle(y)
-        np.random.seed()
+        # X = np.concatenate((tr_X, te_X), axis=0)
+        # y = np.concatenate((tr_Y, te_Y), axis=0)
+        # X = X / 255.
 
-        self.data_shape = (28, 28, 1)
-        test_size = 10000
+        # seed = 123
+        # np.random.seed(seed)
+        # np.random.shuffle(X)
+        # np.random.seed(seed)
+        # np.random.shuffle(y)
+        # np.random.seed()
 
-        if modified:
-            self.original_mnist = X
-            n = opts['toy_dataset_size']
-            n += test_size
-            points = []
-            labels = []
-            for _ in xrange(n):
-                idx = np.random.randint(len(X))
-                point = X[idx]
-                modes = ['n', 'i', 'sl', 'sr', 'su', 'sd']
-                mode = modes[np.random.randint(len(modes))]
-                point = transform_mnist(point, mode)
-                points.append(point)
-                labels.append(y[idx])
-            X = np.array(points)
-            y = np.array(y)
-        self.data = Data(opts, X[:-test_size])
-        self.test_data = Data(opts, X[-test_size:])
-        self.labels = y[:-test_size]
-        self.test_labels = y[-test_size:]
+        # self.data_shape = (28, 28, 1)
+        # test_size = 10000
+
+        # if modified:
+        #     self.original_mnist = X
+        #     n = opts['toy_dataset_size']
+        #     n += test_size
+        #     points = []
+        #     labels = []
+        #     for _ in xrange(n):
+        #         idx = np.random.randint(len(X))
+        #         point = X[idx]
+        #         modes = ['n', 'i', 'sl', 'sr', 'su', 'sd']
+        #         mode = modes[np.random.randint(len(modes))]
+        #         point = transform_mnist(point, mode)
+        #         points.append(point)
+        #         labels.append(y[idx])
+        #     X = np.array(points)
+        #     y = np.array(y)
+        # self.data = Data(opts, X[:-test_size])
+        # self.test_data = Data(opts, X[-test_size:])
+        # self.labels = y[:-test_size]
+        # self.test_labels = y[-test_size:]
+        # self.num_points = len(self.data)
+
+        mnist = tf.keras.datasets.mnist
+        (x_train, y_train),(x_test, y_test) = mnist.load_data()
+        x_train, x_test = x_train / 255.0, x_test / 255.0
+        x_train = np.expand_dims(x_train, 3)
+        x_test = np.expand_dims(x_test, 3)
+        n_train = x_train.shape[0]
+        n_val = x_test.shape[0]
+        self.data = Data(opts, x_train)
+        self.test_data = Data(opts, x_test)
+        self.labels = y_train
+        self.test_labels = y_test
         self.num_points = len(self.data)
-
         logging.debug('Loading Done.')
 
     def _load_mnist3(self, opts):

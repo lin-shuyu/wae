@@ -35,6 +35,9 @@ def encoder(opts, inputs, reuse=False, is_training=False):
                 log_sigmas = ops.linear(opts, hi,
                                         opts['zdim'], 'log_sigmas_lin')
                 res = (mean, log_sigmas)
+        elif opts['e_arch'] == 'wise':
+            # use wise-ale architecture 
+            res = wise_encoder(opts, inputs, is_training, reuse)
         elif opts['e_arch'] == 'dcgan':
             # Fully convolutional architecture similar to DCGAN
             res = dcgan_encoder(opts, inputs, is_training, reuse)
@@ -92,6 +95,9 @@ def decoder(opts, noise, reuse=False, is_training=True):
                 return tf.nn.tanh(out), out
             else:
                 return tf.nn.sigmoid(out), out
+        elif opts['g_arch'] == 'wise':
+            # use wise-ale architecture 
+            res = wise_decoder(opts, noise, is_training, reuse)
         elif opts['g_arch'] in ['dcgan', 'dcgan_mod']:
             # Fully convolutional architecture similar to DCGAN
             res = dcgan_decoder(opts, noise, is_training, reuse)
@@ -105,6 +111,43 @@ def decoder(opts, noise, reuse=False, is_training=True):
             raise ValueError('%s Unknown decoder architecture' % opts['g_arch'])
 
         return res
+
+def wise_encoder(opts, inputs, is_training=False, reuse=False):
+    conv_1 = tf.layers.conv2d(inputs=tf.pad(inputs,
+                                            [[0, 0], [1, 1], [1, 1], [0, 0]],
+                                            "SYMMETRIC"),
+                                filters=16,
+                                kernel_size=4,
+                                strides=2,
+                                padding='valid',
+                                activation=tf.nn.relu)
+    conv_2 = tf.layers.conv2d(inputs=conv_1,
+                                filters=32,
+                                kernel_size=4,
+                                strides=2,
+                                padding='same',
+                                activation=tf.nn.relu)
+    conv_3 = tf.layers.conv2d(inputs=conv_2,
+                                filters=64,
+                                kernel_size=4,
+                                strides=2,
+                                padding='same',
+                                activation=tf.nn.relu)
+    encoded_signal = tf.layers.flatten(conv_3)
+    encoded_signal = tf.layers.dense(encoded_signal,
+                                        units=32,
+                                        activation=tf.nn.relu)
+    code_mean = tf.layers.dense(encoded_signal,
+                                        units=opts['zdim'],
+                                        activation=None,
+                                        name='code_mean')
+    code_std_dev = tf.layers.dense(encoded_signal,
+                                        units=opts['zdim'],
+                                        activation=tf.nn.relu,
+                                        name='code_std_dev')
+    code_std_dev = code_std_dev + 1e-4
+
+    return code_mean, code_std_dev
 
 def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
     num_units = opts['e_num_filters']
@@ -204,6 +247,22 @@ def began_encoder(opts, inputs, is_training=False, reuse=False):
                                 opts['zdim'], scope='log_sigmas_lin')
         return mean, log_sigmas
 
+def wise_decoder(opts, noise, is_training=False, reuse=False):
+    encoded = noise
+    output_shape = datashapes[opts['dataset']] 
+    encoded = tf.layers.dense(encoded, units=16, activation=tf.nn.relu)
+    # decode the code to generate original sequence
+    decoded_1 = tf.layers.dense(encoded,
+                                units=128,
+                                activation=tf.nn.relu)
+    decoded_2 = tf.layers.dense(decoded_1,
+                                units=28*28,
+                                activation=None)
+    decoded = tf.reshape(decoded_2, [-1, output_shape[0], output_shape[1], 1])
+    if opts['input_normalize_sym']:
+        return tf.nn.tanh(decoded), decoded
+    else:
+        return tf.nn.sigmoid(decoded), decoded
 
 def dcgan_decoder(opts, noise, is_training=False, reuse=False):
     output_shape = datashapes[opts['dataset']]
